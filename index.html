@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Katamino Board</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <canvas id="board" width="360" height="150"></canvas>
+  <div style="margin-top: 24px; text-align: center;">
+    <button id="reset-board">reset</button>
+    <button id="undo-board">undo</button>
+    <button id="redo-board">redo</button>
+    <button id="solve-board">solve</button>
+    <span id="solution-number" style="margin-left:12px;"></span>
+  </div>
+  <div style="margin-top:24px; display: flex; gap: 12px; flex-wrap: wrap;">
+    <div id="piece-list" style="display: flex; gap: 12px; flex-wrap: wrap;"></div>
+  </div>
+  <div id="piece-area-container">
+    <canvas id="piece-area" width="150" height="150"></canvas>
+    <div class="piece-btns">
+      <button id="rotate-piece">Rotate</button>
+      <button id="flip-piece">Flip</button>
+    </div>
+  </div>
+  <script src="main.js"></script>
+</body>
+</html>
