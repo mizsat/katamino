@@ -181,13 +181,20 @@ canvas.addEventListener('click', function(e) {
   const gx = Math.floor(mx / cellSize);
   const gy = Math.floor(my / cellSize);
   const shape = getRotatedShape(pieces[currentPieceIndex].shape, currentRotation, currentFlip);
-  if (!canPlacePiece(gx, gy, shape)) return;
+  // プレビューと同じく中心合わせで配置
+  const shapeW = shape[0].length;
+  const shapeH = shape.length;
+  const offsetX = Math.floor(shapeW / 2);
+  const offsetY = Math.floor(shapeH / 2);
+  const baseX = gx - offsetX;
+  const baseY = gy - offsetY;
+  if (!canPlacePiece(baseX, baseY, shape)) return;
   // UNDO用にスタックをクリア
   redoStack = [];
   placedPieces.push({
     index: currentPieceIndex,
-    x: gx,
-    y: gy,
+    x: baseX,
+    y: baseY,
     rotation: currentRotation,
     flip: currentFlip
   });
@@ -350,25 +357,29 @@ function drawBoardWithPieces() {
   if (hoverCell) {
     const piece = pieces[currentPieceIndex];
     const shape = getRotatedShape(piece.shape, currentRotation, currentFlip);
-    if (canPlacePiece(hoverCell.x, hoverCell.y, shape)) {
-      ctx.save();
-      ctx.globalAlpha = 0.5;
-      for (let y = 0; y < shape.length; y++) {
-        for (let x = 0; x < shape[y].length; x++) {
-          if (shape[y][x]) {
-            const bx = hoverCell.x + x;
-            const by = hoverCell.y + y;
-            if (bx >= 0 && bx < cols && by >= 0 && by < rows) {
-              ctx.fillStyle = piece.color;
-              ctx.fillRect(bx * cellSize, by * cellSize, cellSize, cellSize);
-              ctx.strokeStyle = '#333';
-              ctx.strokeRect(bx * cellSize, by * cellSize, cellSize, cellSize);
-            }
+    const shapeW = shape[0].length;
+    const shapeH = shape.length;
+    const offsetX = Math.floor(shapeW / 2);
+    const offsetY = Math.floor(shapeH / 2);
+    const baseX = hoverCell.x - offsetX;
+    const baseY = hoverCell.y - offsetY;
+    ctx.save();
+    ctx.globalAlpha = canPlacePiece(baseX, baseY, shape) ? 0.5 : 0.18; // 配置不可時はさらに薄く
+    for (let y = 0; y < shape.length; y++) {
+      for (let x = 0; x < shape[y].length; x++) {
+        if (shape[y][x]) {
+          const bx = baseX + x;
+          const by = baseY + y;
+          if (bx >= 0 && bx < cols && by >= 0 && by < rows) {
+            ctx.fillStyle = piece.color;
+            ctx.fillRect(bx * cellSize, by * cellSize, cellSize, cellSize);
+            ctx.strokeStyle = '#333';
+            ctx.strokeRect(bx * cellSize, by * cellSize, cellSize, cellSize);
           }
         }
       }
-      ctx.restore();
     }
+    ctx.restore();
   }
 }
 // 初期ボード描画
