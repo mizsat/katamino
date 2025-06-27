@@ -331,7 +331,7 @@ function drawBoardWithPieces() {
   // solveOverlayがあれば半透明で解を重ねて描画
   if (solveOverlay) {
     ctx.save();
-    ctx.globalAlpha = 0.4;
+    ctx.globalAlpha = 0.22; // さらに薄く
     for (let y = 0; y < solveOverlay.length; y++) {
       for (let x = 0; x < solveOverlay[y].length; x++) {
         const ch = solveOverlay[y][x];

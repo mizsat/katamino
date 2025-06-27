@@ -1,48 +1,88 @@
 body {
-  font-family: sans-serif;
-  background: #f0f0f0;
+  font-family: 'Segoe UI', 'Hiragino Sans', Arial, sans-serif;
+  background: linear-gradient(135deg, #e0e7ef 0%, #f8fafc 100%);
   margin: 0;
   padding: 0;
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
   align-items: center;
 }
 
 #board {
-  display: grid;
-  grid-template-columns: repeat(12, 40px); /* 横長に変更 */
-  grid-template-rows: repeat(5, 40px);    /* 縦を短く */
-  gap: 2px;
-  margin-top: 20px;
+  box-shadow: 0 4px 24px rgba(30,40,60,0.10), 0 1.5px 6px rgba(30,40,60,0.08);
+  background: #fff;
+  display: block;
+  margin-top: 36px;
+  border: 1.5px solid #b0bec5;
 }
 
 #piece-area-container {
   width: 100%;
+  max-width: 400px;
+  background: #fff;
+  box-shadow: 0 2px 12px rgba(30,40,60,0.08);
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-top: 24px;
+  margin-top: 32px;
+  padding: 18px 0 12px 0;
 }
 #piece-area {
-  border: 1px solid #ccc;
+  border: 1.5px solid #b0bec5;
   display: block;
-  margin: 0 auto 8px auto;
+  margin: 0 auto 12px auto;
+  background: #f5f7fa;
 }
 .piece-btns {
   display: flex;
-  gap: 12px;
+  gap: 16px;
   justify-content: center;
 }
-#rotate-piece, #flip-piece {
+#rotate-piece, #flip-piece, #reset-board, #undo-board, #redo-board, #solve-board {
   margin-top: 8px;
-  padding: 6px 18px;
-  font-size: 1rem;
-  border-radius: 4px;
-  border: 1px solid #888;
-  background: #fff;
+  padding: 8px 22px;
+  font-size: 1.08rem;
+  border: none;
+  background: linear-gradient(90deg, #1976d2 0%, #42a5f5 100%);
+  color: #fff;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(25, 118, 210, 0.08);
   cursor: pointer;
-  transition: background 0.2s;
+  transition: background 0.18s, box-shadow 0.18s, transform 0.12s;
 }
-#rotate-piece:hover, #flip-piece:hover {
-  background: #e0e0e0;
+#rotate-piece:hover, #flip-piece:hover, #reset-board:hover, #undo-board:hover, #redo-board:hover, #solve-board:hover {
+  background: linear-gradient(90deg, #1565c0 0%, #64b5f6 100%);
+  box-shadow: 0 4px 16px rgba(25, 118, 210, 0.13);
+  transform: translateY(-2px) scale(1.04);
+}
+#piece-list {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 18px;
+}
+#piece-list canvas {
+  box-shadow: 0 1.5px 6px rgba(30,40,60,0.10);
+  background: #f8fafc;
+  border: 1.2px solid #b0bec5;
+  transition: box-shadow 0.18s, border 0.18s;
+}
+#piece-list canvas:hover {
+  box-shadow: 0 4px 16px rgba(25, 118, 210, 0.13);
+  border: 1.5px solid #1976d2;
+}
+
+/* ボタン行の中央寄せ・余白 */
+div[style*="text-align: center"] {
+  margin-top: 32px !important;
+  margin-bottom: 8px;
+}
+
+#solution-number {
+  font-size: 1.1rem;
+  color: #1976d2;
+  font-weight: 500;
+  margin-left: 16px;
 }
