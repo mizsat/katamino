@@ -54,6 +54,16 @@ body {
   border: 1.2px solid #1976d2;
   transform: translateY(-1px) scale(1.03);
 }
+#rotate-piece.active, #flip-piece.active, #reset-board.active, #undo-board.active, #redo-board.active, #solve-board.active {
+  background: #1976d2;
+  color: #fff;
+  border: 1.2px solid #1976d2;
+}
+#solve-board.active:hover {
+  background: #1565c0;
+  color: #fff;
+  border: 1.2px solid #1565c0;
+}
 #piece-list {
   display: flex;
   gap: 16px;

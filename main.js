@@ -22,6 +22,7 @@ for (let y = 0; y < rows; y++) {
 const pieceArea = document.getElementById('piece-area');
 const rotateBtn = document.getElementById('rotate-piece');
 const flipBtn = document.getElementById('flip-piece');
+const solveBtn = document.getElementById('solve-board');
 const pieceCtx = pieceArea.getContext('2d');
 let currentPieceIndex = 0;
 let currentRotation = 0;
@@ -212,7 +213,7 @@ canvas.addEventListener('click', function(e) {
     currentFlip = false;
   }
   // solveOverlayがONなら解を再検索して更新
-  if (solveOverlay) {
+  if (solveBtn.classList.contains('active')) {
     let matchIdx = -1;
     for (let i = 0; i < solutions.length; i++) {
       const rowsData = solutions[i];
@@ -308,12 +309,21 @@ function canPlacePiece(gx, gy, shape) {
 
 function drawBoardWithPieces() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-  for (let y = 0; y < rows; y++) {
-    for (let x = 0; x < cols; x++) {
-      ctx.fillStyle = '#fff';
-      ctx.fillRect(x * cellSize, y * cellSize, cellSize, cellSize);
-      ctx.strokeStyle = '#ccc';
-      ctx.strokeRect(x * cellSize, y * cellSize, cellSize, cellSize);
+  // solveOverlay===null かつ solveモードON（=solveBtnがON状態）かつ解が見つからない場合はグレー半透明
+  if (solveOverlay === null && solveBtn && solveBtn.classList.contains('active')) {
+    ctx.save();
+    ctx.globalAlpha = 0.22;
+    ctx.fillStyle = '#888';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.restore();
+  } else {
+    for (let y = 0; y < rows; y++) {
+      for (let x = 0; x < cols; x++) {
+        ctx.fillStyle = '#fff';
+        ctx.fillRect(x * cellSize, y * cellSize, cellSize, cellSize);
+        ctx.strokeStyle = '#ccc';
+        ctx.strokeRect(x * cellSize, y * cellSize, cellSize, cellSize);
+      }
     }
   }
   // 置かれたピース
@@ -399,14 +409,46 @@ flipBtn.onclick = function() {
 };
 
 const resetBtn = document.getElementById('reset-board');
+const undoBtn = document.getElementById('undo-board');
+const redoBtn = document.getElementById('redo-board');
 resetBtn.onclick = function() {
   placedPieces = [];
   redoStack = [];
-  solveOverlay = null; // リセット時に半透明解も消す
+  solveOverlay = null;
+  // solveモードONなら解を再検索（グレー表示も含む）
+  if (solveBtn.classList.contains('active')) {
+    let matchIdx = -1;
+    for (let i = 0; i < solutions.length; i++) {
+      const rowsData = solutions[i];
+      let match = true;
+      for (const p of placedPieces) {
+        let shape = pieces[p.index].shape;
+        for (let r = 0; r < (p.rotation || 0); r++) shape = rotateShape(shape);
+        if (p.flip) shape = flipShape(shape);
+        for (let sy = 0; sy < shape.length; sy++) {
+          for (let sx = 0; sx < shape[sy].length; sx++) {
+            if (shape[sy][sx]) {
+              const by = p.y + sy;
+              const bx = p.x + sx;
+              if (by < 0 || by >= 5 || bx < 0 || bx >= 12) { match = false; break; }
+              const ch = rowsData[by][bx];
+              if (pieces[p.index].name !== ch) match = false;
+            }
+          }
+        }
+        if (!match) break;
+      }
+      if (match) { matchIdx = i; break; }
+    }
+    if (matchIdx === -1) {
+      solveOverlay = null;
+    } else {
+      solveOverlay = solutions[matchIdx];
+    }
+  }
   drawBoardWithPieces();
 };
 
-const undoBtn = document.getElementById('undo-board');
 undoBtn.onclick = function() {
   if (placedPieces.length === 0) return;
   // 最後のピースをredoStackに退避
@@ -424,13 +466,42 @@ undoBtn.onclick = function() {
     currentRotation = 0;
     currentFlip = false;
   }
+  // solveモードONなら解を再検索
+  if (solveBtn.classList.contains('active')) {
+    let matchIdx = -1;
+    for (let i = 0; i < solutions.length; i++) {
+      const rowsData = solutions[i];
+      let match = true;
+      for (const p of placedPieces) {
+        let shape = pieces[p.index].shape;
+        for (let r = 0; r < (p.rotation || 0); r++) shape = rotateShape(shape);
+        if (p.flip) shape = flipShape(shape);
+        for (let sy = 0; sy < shape.length; sy++) {
+          for (let sx = 0; sx < shape[sy].length; sx++) {
+            if (shape[sy][sx]) {
+              const by = p.y + sy;
+              const bx = p.x + sx;
+              if (by < 0 || by >= 5 || bx < 0 || bx >= 12) { match = false; break; }
+              const ch = rowsData[by][bx];
+              if (pieces[p.index].name !== ch) match = false;
+            }
+          }
+        }
+        if (!match) break;
+      }
+      if (match) { matchIdx = i; break; }
+    }
+    if (matchIdx === -1) {
+      solveOverlay = null;
+    } else {
+      solveOverlay = solutions[matchIdx];
+    }
+  }
   drawAllPieceCanvases();
   drawSinglePiece(currentPieceIndex);
   drawBoardWithPieces();
 };
 
-const redoBtn = document.getElementById('redo-board');
-const solveBtn = document.getElementById('solve-board');
 redoBtn.onclick = function() {
   if (redoStack.length === 0) return;
   const piece = redoStack.pop();
@@ -447,6 +518,37 @@ redoBtn.onclick = function() {
     currentPieceIndex = nextIndex;
     currentRotation = 0;
     currentFlip = false;
+  }
+  // solveモードONなら解を再検索
+  if (solveBtn.classList.contains('active')) {
+    let matchIdx = -1;
+    for (let i = 0; i < solutions.length; i++) {
+      const rowsData = solutions[i];
+      let match = true;
+      for (const p of placedPieces) {
+        let shape = pieces[p.index].shape;
+        for (let r = 0; r < (p.rotation || 0); r++) shape = rotateShape(shape);
+        if (p.flip) shape = flipShape(shape);
+        for (let sy = 0; sy < shape.length; sy++) {
+          for (let sx = 0; sx < shape[sy].length; sx++) {
+            if (shape[sy][sx]) {
+              const by = p.y + sy;
+              const bx = p.x + sx;
+              if (by < 0 || by >= 5 || bx < 0 || bx >= 12) { match = false; break; }
+              const ch = rowsData[by][bx];
+              if (pieces[p.index].name !== ch) match = false;
+            }
+          }
+        }
+        if (!match) break;
+      }
+      if (match) { matchIdx = i; break; }
+    }
+    if (matchIdx === -1) {
+      solveOverlay = null;
+    } else {
+      solveOverlay = solutions[matchIdx];
+    }
   }
   drawAllPieceCanvases();
   drawSinglePiece(currentPieceIndex);
@@ -556,11 +658,14 @@ function showSolution(idx) {
 solveBtn.onclick = function() {
   if (solutions.length === 0) return;
   // solveOverlayが表示中ならOFFにして消す
-  if (solveOverlay) {
+  if (solveBtn.classList.contains('active')) {
+    solveBtn.classList.remove('active');
     solveOverlay = null;
     drawBoardWithPieces();
     return;
   }
+  // ONにする
+  solveBtn.classList.add('active');
   // 現在の盤面状態に一致する解を探す
   let matchIdx = -1;
   for (let i = 0; i < solutions.length; i++) {
@@ -590,7 +695,6 @@ solveBtn.onclick = function() {
     if (match) { matchIdx = i; break; }
   }
   if (matchIdx === -1) {
-    alert('該当する解が見つかりません');
     solveOverlay = null;
     drawBoardWithPieces();
     return;
@@ -599,3 +703,77 @@ solveBtn.onclick = function() {
   solveOverlay = solutions[matchIdx];
   drawBoardWithPieces();
 };
+
+// ピースを置いたときもsolveBtnのactive状態を考慮してグレー表示
+canvas.addEventListener('click', function(e) {
+  const rect = canvas.getBoundingClientRect();
+  const mx = e.clientX - rect.left;
+  const my = e.clientY - rect.top;
+  const gx = Math.floor(mx / cellSize);
+  const gy = Math.floor(my / cellSize);
+  const shape = getRotatedShape(pieces[currentPieceIndex].shape, currentRotation, currentFlip);
+  // プレビューと同じく中心合わせで配置
+  const shapeW = shape[0].length;
+  const shapeH = shape.length;
+  const offsetX = Math.floor(shapeW / 2);
+  const offsetY = Math.floor(shapeH / 2);
+  const baseX = gx - offsetX;
+  const baseY = gy - offsetY;
+  if (!canPlacePiece(baseX, baseY, shape)) return;
+  // UNDO用にスタックをクリア
+  redoStack = [];
+  placedPieces.push({
+    index: currentPieceIndex,
+    x: baseX,
+    y: baseY,
+    rotation: currentRotation,
+    flip: currentFlip
+  });
+  // 次の未配置ピースを自動選択
+  let nextIndex = -1;
+  for (let i = 0; i < pieces.length; i++) {
+    if (!placedPieces.some(p => p.index === i)) {
+      nextIndex = i;
+      break;
+    }
+  }
+  if (nextIndex !== -1) {
+    currentPieceIndex = nextIndex;
+    currentRotation = 0;
+    currentFlip = false;
+  }
+  // solveOverlayがONなら解を再検索して更新
+  if (solveBtn.classList.contains('active')) {
+    let matchIdx = -1;
+    for (let i = 0; i < solutions.length; i++) {
+      const rowsData = solutions[i];
+      let match = true;
+      for (const p of placedPieces) {
+        let shape = pieces[p.index].shape;
+        for (let r = 0; r < (p.rotation || 0); r++) shape = rotateShape(shape);
+        if (p.flip) shape = flipShape(shape);
+        for (let sy = 0; sy < shape.length; sy++) {
+          for (let sx = 0; sx < shape[sy].length; sx++) {
+            if (shape[sy][sx]) {
+              const by = p.y + sy;
+              const bx = p.x + sx;
+              if (by < 0 || by >= 5 || bx < 0 || bx >= 12) { match = false; break; }
+              const ch = rowsData[by][bx];
+              if (pieces[p.index].name !== ch) match = false;
+            }
+          }
+        }
+        if (!match) break;
+      }
+      if (match) { matchIdx = i; break; }
+    }
+    if (matchIdx === -1) {
+      solveOverlay = null;
+    } else {
+      solveOverlay = solutions[matchIdx];
+    }
+  }
+  drawAllPieceCanvases();
+  drawSinglePiece(currentPieceIndex);
+  drawBoardWithPieces();
+});
